@@ -11,9 +11,9 @@ export default class Carousel {
     this.options = options;
     this.index = 0;
     this.initDOM();
-    this.initPicker();
     this.initPrevNext();
     this.initOptions();
+    this.initPicker();
     this.holdMove();
   }
 
@@ -39,47 +39,46 @@ export default class Carousel {
       if (getWidth(child) > maxW) {
         maxW = getWidth(child);
       }
-      child.appendTo(this.childrenWrapper);
-    }
-    let wrapperedChildren = $('.child');
-    for (let i = 0; i < wrapperedChildren.length; i++) {
-      let newChild = $(wrapperedChildren[i]);
-      if (getWidth(newChild) < maxW || getHeight(newChild) < maxH) {
-        let itemWrapper = $('<div></div>').addClass('child flex').width(maxW).height(maxH);
-        newChild.wrap(itemWrapper);
-      }
+      let itemWrapper = $("<div></div>")
+        .addClass("flex")
+        .width(maxW)
+        .height(maxH)
+        .wrapInner(child)
+        .appendTo(this.childrenWrapper);
     }
     this.wrapper.addClass("wrapper");
     this.wrapper.css({
       height: maxH,
       width: maxW
     });
+  }
+
+  initOptions() {
     if (this.options.during > 0) {
+      this.autoPlay(this.options.during);
       this.wrapper.hover(
         e => this.stopPlay(),
         e => {
           this.autoPlay(this.options.during);
-          this.childrenWrapper.off('mousemove')
+          this.childrenWrapper.off("mousemove");
         }
       );
     }
-  }
-
-  initOptions() {
-    if (this.options.during && this.options.during > 0) {
-      this.autoPlay(this.options.during);
-    }
     //slide初始化
     switch (this.options.slide) {
-      case 'bounce':
-        this.childrenWrapper.css('transitionTimingFunction', 'cubic-bezier(.56,-0.77,.51,1.59)');
+      case "bounce":
+        this.childrenWrapper.css(
+          "transitionTimingFunction",
+          "cubic-bezier(.56,-0.77,.51,1.59)"
+        );
         break;
-      case 'ease':
+      case "ease":
       case null:
       case undefined:
       default:
-        this.childrenWrapper.css('transitionTimingFunction', 'ease');
+        this.childrenWrapper.css("transitionTimingFunction", "ease");
     }
+    this.initRect();
   }
 
   initPicker() {
@@ -109,6 +108,12 @@ export default class Carousel {
         .css({
           marginBottom: 0
         });
+      $(".pickBtn")
+        .eq(0)
+        .css({
+          height: 20,
+          width: 10
+        });
     } else {
       let offset = getWidth(this.wrapper) / 2 - getWidth(this.pickers) / 2;
       this.pickers.css("left", offset);
@@ -116,7 +121,8 @@ export default class Carousel {
   }
 
   initPrevNext() {
-    if (this.options.direction && this.options.direction === "vertical") {} else {
+    if (this.options.direction && this.options.direction === "vertical") {
+    } else {
       this.prev = $("<div></div>")
         .addClass("prev_next prev")
         .text("<")
@@ -162,28 +168,39 @@ export default class Carousel {
   }
 
   holdMove() {
-    let startPoint = 0;
+    let startX = 0;
+    let startY = 0;
     let move = 0;
-    this.wrapper.on('touchstart', e => {
-      startPoint = e.targetTouches[0].pageX;
-    })
-    this.wrapper.on('touchmove', e => {
-      let curPoint = e.targetTouches[0].pageX;
-      move = (curPoint - startPoint) - (this.index * getWidth(this.wrapper));
-      this.childrenWrapper.css('left', move);
+    const wrapperWidth = getWidth(this.wrapper);
+    const wrapperHeight = getHeight(this.wrapper);
+    this.wrapper.on("touchstart", e => {
+      startX = e.targetTouches[0].pageX;
+      startY = e.targetTouches[0].pageY;
     });
-    this.wrapper.on('touchend', e => {
-      //let endPoint = e.targetTouches[0].pageX;
-      if (move > getWidth(this.wrapper) / 2 && this.index > 0) { //右滑=>后退
-        this.index--;
-        console.log('右滑', move, getWidth(this.wrapper) / 2)
-      } else if (move < 0 && -move > getWidth(this.wrapper) / 2 && this.index < this.pickers.length) { //左滑=>前进
-        this.index++;
-        console.log('左滑', move, getWidth(this.wrapper) / 2)
+    this.wrapper.on("touchmove", e => {
+      let curX = e.targetTouches[0].pageX;
+      let curY = e.targetTouches[0].pageY;
+      if (this.options.direction && this.options.direction === "vertical") {
+        move = curY - startY;
+        this.childrenWrapper.css("top", move - this.index * wrapperHeight);
+      } else {
+        move = curX - startX;
+        this.childrenWrapper.css("left", move - this.index * wrapperWidth);
       }
-      console.log('???', move, getWidth(this.wrapper) / 2)
+    });
+    this.wrapper.on("touchend", e => {
+      if (move > wrapperWidth / 2 && this.index !== 0) {
+        //右滑=>后退
+        this.index--;
+      } else if (
+        -move > wrapperWidth / 2 &&
+        this.index !== this.children.length - 1
+      ) {
+        //左滑<=前进
+        this.index++;
+      }
       this.toIndex();
-    })
+    });
   }
 
   toIndex() {
@@ -191,23 +208,56 @@ export default class Carousel {
       this.childrenWrapper.css({
         top: `-${getHeight(this.wrapper) * this.index}px`
       });
+      $(".pickBtn")
+        .eq(this.index)
+        .css({
+          background: "#00000080",
+          height: 20
+        })
+        .siblings()
+        .css({
+          background: "#00000030",
+          height: 20
+        });
     } else {
       this.childrenWrapper.css({
         left: `-${getWidth(this.wrapper) * this.index}px`
       });
+      $(".pickBtn")
+        .eq(this.index)
+        .css({
+          background: "#00000080",
+          width: 20
+        })
+        .siblings()
+        .css({
+          background: "#00000030",
+          width: 10
+        });
     }
-    $(".pickBtn")
-      .eq(this.index)
-      .css("background", "#00000080")
-      .siblings()
-      .css("background", "#00000030");
+  }
+
+  initRect() {
+    if (this.options.width && this.options.height) {
+      $(".childrenWrapper .flex").css({
+        width: this.options.width,
+        height: this.options.height
+      });
+      $(".wrapper").css({
+        width: this.options.width,
+        height: this.options.height
+      });
+      $(".childrenWrapper").height(this.options.height);
+    }
   }
 }
 
 let carousel = new Carousel("#app", {
-  //during: 1000,
+  //during: 500,
   //direction: "vertical",
-  slide: 'ease'
+  slide: "ease",
+  // width: 200,
+  // height: 200
 });
 
 console.log(carousel);

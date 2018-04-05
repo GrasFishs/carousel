@@ -3,17 +3,21 @@
   overflow: hidden;
 }
 
-.child {
-  box-sizing: border-box;
-  padding: 200px;
-  user-select: none;
-  display: inline-block;
-}
 
 .flex{
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.child{
+  max-width: 100%;
+  max-height: 100%;
+  box-sizing: border-box;
+  width: 500px;
+  height: 300px;
+  user-select: none;
+  display: inline-block;
 }
 
 .childrenWrapper {
@@ -35,7 +39,7 @@
 .picker .pickBtn {
   width: 10px;
   height: 10px;
-  border-radius: 50%;
+  border-radius: 5px;
   background: #00000030;
   margin-right: 5px;
   display: inline-block;
@@ -47,6 +51,7 @@
 }
 .picker .pickBtn:first-child {
   background: #00000080;
+  width: 20px;
 }
 
 .picker .pickBtn:last-child {
